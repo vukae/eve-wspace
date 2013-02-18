@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Eve W-Space by marbindrakon</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Eve W-Space</h1>
+        <p>Wormhole mapping and corporation management for Eve Online.</p>
+
+        <p class="view"><a href="https://github.com/marbindrakon/eve-wspace">View the Project on GitHub <small>marbindrakon/eve-wspace</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/marbindrakon/eve-wspace/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/marbindrakon/eve-wspace/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/marbindrakon/eve-wspace">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>Eve W-Space v0.1</h1>
+
+<p>NOTE: Eve W-Space is currently in alpha. Most features outside of Mapping 
+are not yet implemented past some prototype data models. </p>
+
+<h2>What is it?</h2>
+
+<p>Eve W-Space is, at its core, a wormhole mapping and intel tool for the MMORPG 
+Eve Online. If you wish, it can be much more. It can be customized to fill 
+roles from simple mapping applicaiton (with all extra features disabled) to 
+the centerpiece of an entire alliance services infrastructure.</p>
+
+<p>Eve W-Space is designed to be a single-tenant soulution hosted by a single corp 
+or alliance. A fleixble permissions system allows for easily restricting data 
+where needed.</p>
+
+<h2>How do I use it?</h2>
+
+<p>Generally, Eve W-Space requires:</p>
+
+<ul>
+<li>Django 1.4+</li>
+<li>Python 2.7+</li>
+<li>Celery</li>
+<li>RabbitMQ (preferred)</li>
+<li>memcached (preferred)</li>
+<li>mySQL (preferred, should work with Postgres as well)</li>
+</ul><p>Other required python modules are listed in requirements.txt.</p>
+
+<p>How Eve W-Space is installed will depend on the environment, a sample Puppet 
+manifest (based on Ubuntu 12.04 LTS, Nginx, and Gunicorn) and scripts are 
+provided in the puppet/sample directory to get you started while proper 
+documentation is lacking.</p>
+
+<p>For quick testing and hacking, a Vagrantfile is provided to get up and running 
+quickly, the manifest used by the Vagrant VM does not automatically install a web 
+server.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/marbindrakon">marbindrakon</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-38534563-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
