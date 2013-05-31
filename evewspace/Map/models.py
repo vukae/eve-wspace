@@ -118,13 +118,11 @@ class System(SystemData):
         if ActivePilot.objects.filter(timestamp__gt=threshold, user=user,
                 charactername=charname, shipname=shipname,
                 shiptype=shiptype, system=self).count() == 0:
-            # Flush other records for this character
-            ActivePilot.objects.filter(charactername=charname).delete()
+            # Flush other records for this character and user
+            ActivePilot.objects.filter(charactername=charname, user=user).delete()
             # Add new record
             record = ActivePilot(system=self, user=user, charactername=charname,
                     shipname=shipname, shiptype=shiptype).save()
-        # Purge old records while we're at it
-        ActivePilot.objects.filter(timestamp__lt=threshold).delete()
 
 class KSystem(System):
     sov = models.CharField(max_length = 100)
@@ -134,13 +132,13 @@ class KSystem(System):
         """
         Returns the number of gate jumps to the destination by shortest route.
         """
-        return utils.RouteFinder(self, destination).route_length()
+        return utils.RouteFinder().route_length(self, destination)
 
     def distance(self, destination):
         """
         Returns the light-year distance to the destination.
         """
-        return utils.RouteFinder(self, destination).ly_distance()
+        return utils.RouteFinder().ly_distance(self, destination)
 
 
 class WSystem(System):
@@ -320,6 +318,15 @@ class Wormhole(models.Model):
     mass_status = models.IntegerField(choices = ((0, "No Shrink"),
         (1, "First Shrink"), (2, "Critical")))
     updated = models.DateTimeField(auto_now=True)
+    eol_time = models.DateTimeField(null=True)
+    collapsed = models.NullBooleanField(null=True)
+
+    def save(self, *args, **kwargs):
+        if self.time_status == 1 and not self.eol_time:
+            self.eol_time = datetime.now(pytz.utc)
+        elif self.time_status != 1:
+            self.eol_time = None
+        super(Wormhole, self).save(*args, **kwargs)
 
 class SignatureType(models.Model):
     """
@@ -414,7 +421,7 @@ class Signature(models.Model):
         """
         Ensure that Sig IDs are proper.
         """
-        self.sigid = self.sigid[:3].upper()
+        self.sigid = utils.convert_signature_id(self.sigid)
         super(Signature, self).save(*args, **kwargs)
 
 class MapPermission(models.Model):
@@ -468,8 +475,7 @@ class ActivePilot(models.Model):
 class Destination(models.Model):
     """Represents a corp-wide destination whose range should be shown in the map."""
     system = models.ForeignKey(KSystem, related_name='destinations')
-    # Capital destinations also show light year distance
-    capital = models.BooleanField()
+    user = models.ForeignKey(User, related_name='destinations', null=True)
 
 class SiteSpawn(models.Model):
     """Contains the site spawn list for a site as HTML."""
