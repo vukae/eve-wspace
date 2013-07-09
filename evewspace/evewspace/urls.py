@@ -15,8 +15,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.conf.urls import patterns, include, url
-
+from django.contrib import admin
 # Run the autodiscovers for various registries to fill them
+admin.autodiscover()
 from search import registry as search_registry
 from Alerts import method_registry
 from core import admin_page_registry, nav_registry
@@ -37,6 +38,7 @@ urlpatterns = patterns('',
         # Uncomment the admin/doc line below to enable admin documentation:
         # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
         url(r'^$', 'core.views.home_view', name='index'),
+	url(r'^admin/', include(admin.site.urls)),
         url(r'^settings/$', 'core.views.config_view', name='settings'),
         url(r'^account/', include('account.urls')),
         url(r'^map/', include('Map.urls')),
@@ -44,4 +46,5 @@ urlpatterns = patterns('',
         url(r'^pos/', include('POS.urls')),
         url(r'^sitetracker/', include('SiteTracker.urls')),
         url(r'^alerts/', include('Alerts.urls')),
+        url(r'^euni/', include('euniwspace.urls')),
 )

@@ -39,7 +39,7 @@ class JabberAlertMethod(AlertMethodBase):
         for user in to_users:
             if self.is_registered(user, sub_group):
                 if local_jabber:
-                    jid_list.append(("%s@%s" % (user.username.replace(" ",
+                    jid_list.append(("%s@%s" % (user.username.lower().replace(" ",
                         jid_space_char), jabber_domain)).encode('utf-8'))
                 for jid in user.jabber_accounts.all():
                     jid_list.append(jid.jid.encode('utf-8'))

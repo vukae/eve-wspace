@@ -3,6 +3,9 @@ from django.contrib.auth.models import User, Group
 from celery import task
 from API import utils as handler
 import eveapi
+import csv
+import sys
+
 
 @task()
 def validate_users():
@@ -35,3 +38,19 @@ def validate_users():
                 
             
    
+@task()
+def update_whitelist():
+    csvfile = open('/home/evewspace/eve-wspace/evewspace/whitelist.csv', 'r')
+    
+    reader = csv.reader(csvfile, delimiter='\t')
+    whitelist = []
+    for line in reader:
+        whitelist.append(line[0])
+    
+    for entry in WhitelistEntry.objects.all():
+        if entry.entry not in whitelist:
+            entry.delete()
+    
+    for member in whitelist:
+        if not WhitelistEntry.objects.filter(entry=member).count():
+            WhitelistEntry(entry=member).save()
