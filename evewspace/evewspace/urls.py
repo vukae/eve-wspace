@@ -21,12 +21,10 @@ admin.autodiscover()
 from search import registry as search_registry
 from Alerts import method_registry
 from core import admin_page_registry, nav_registry
-from account import profile_section_registry
 
 method_registry.autodiscover()
 search_registry.autodiscover()
 admin_page_registry.autodiscover()
-profile_section_registry.autodiscover()
 nav_registry.autodiscover()
 
 # Actual URL definitions
@@ -47,4 +45,5 @@ urlpatterns = patterns('',
         url(r'^sitetracker/', include('SiteTracker.urls')),
         url(r'^alerts/', include('Alerts.urls')),
         url(r'^euni/', include('euniwspace.urls')),
+        url(r'^api/', include('API.urls')),
 )

@@ -1,10 +1,9 @@
 from models import WhitelistEntry
 from django.contrib.auth.models import User, Group
 from celery import task
-from API import utils as handler
+from API import cache_handler as handler
 import eveapi
 import csv
-import sys
 
 
 @task()
@@ -23,9 +22,12 @@ def validate_users():
             if WhitelistEntry.objects.filter(entry=user.username).count():
                 if not camper_group in user.groups.all():
                     user.groups.add(camper_group)
+                    user.save()
             else:
+            	print("User: " + user.username + " not found in Whitelist")
                 if camper_group in user.groups.all():
                     user.groups.remove(camper_group)
+                    user.save()
             try:
                 charid = api.eve.CharacterID(names=user.username).characters[0].characterID
                 if api.eve.CharacterInfo(characterID=charid).alliance != alliance_name:
@@ -33,12 +35,20 @@ def validate_users():
                     #user.set_unusable_password()
                     user.groups = []
                     user.save()
+                    
+                    print("User '" + user.username + "' account was de-activated, because he is no longuer in IVY League.")
+            except AttributeError:
+                print("User " + user.username + "account was de-activated, because he does not exist or is not in an alliance.")
+                user.is_active = False
+                user.groups = []
+                user.save()
             except:
+                print("API Exception, doing nothing")
                 pass
                 
             
    
-@task()
+
 def update_whitelist():
     csvfile = open('/home/evewspace/eve-wspace/evewspace/whitelist.csv', 'r')
     
