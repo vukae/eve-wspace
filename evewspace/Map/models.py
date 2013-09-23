@@ -22,6 +22,8 @@ from django.forms import ModelForm
 from datetime import datetime, timedelta, time
 import pytz
 from Map import utils
+from Map.utils import MapJSONGenerator
+from django.core.cache import cache
 # Create your models here.
 
 class WormholeType(models.Model):
@@ -287,6 +289,7 @@ class MapSystem(models.Model):
 
     def save(self, *args, **kwargs):
         self.friendlyname = self.friendlyname.upper()
+        cache.delete(MapJSONGenerator.get_cache_key(self.map))
         super(MapSystem, self).save(*args, **kwargs)
 
     def remove_system(self, user):
@@ -332,6 +335,7 @@ class Wormhole(models.Model):
             self.eol_time = datetime.now(pytz.utc)
         elif self.time_status != 1:
             self.eol_time = None
+        cache.delete(MapJSONGenerator.get_cache_key(self.map))
         super(Wormhole, self).save(*args, **kwargs)
 
 class SignatureType(models.Model):
@@ -355,6 +359,7 @@ class SignatureType(models.Model):
 class Signature(models.Model):
     """Stores the signatures active in all systems. Relates to System model."""
     system = models.ForeignKey(System, related_name="signatures")
+    modified_by = models.ForeignKey(User, related_name="signatures", null=True)
     sigtype = models.ForeignKey(SignatureType, related_name="sigs", null=True, blank=True)
     sigid = models.CharField(max_length = 10)
     updated = models.BooleanField()
@@ -368,6 +373,9 @@ class Signature(models.Model):
     downtimes = models.IntegerField(null=True, blank=True)
     ratscleared = models.DateTimeField(null=True, blank=True)
     lastescalated = models.DateTimeField(null=True, blank=True)
+    modified_time = models.DateTimeField(auto_now=True, null=True)
+    owned_by = models.ForeignKey(User, related_name="sigs_owned", null=True)
+    owned_time = models.DateTimeField(null=True)
 
     class Meta:
         ordering = ['sigid']
@@ -421,6 +429,16 @@ class Signature(models.Model):
     def update(self):
         """Mark the signature as having been updated since DT."""
         self.updated = True
+        self.save()
+
+    def toggle_ownership(self, user):
+        """Toggles ownership."""
+        if self.owned_by:
+            self.owned_by = None
+            self.owned_time = None
+        else:
+            self.owned_by = user
+            self.owned_time = datetime.now(pytz.utc)
         self.save()
 
     def save(self, *args, **kwargs):

@@ -61,7 +61,7 @@ def update_alliance(allianceID):
             # If an alliance's executor can't be processed for some reason,
             # set it to None
             alliance.executor = Corporation.objects.get(id=allianceapi.executorCorpID)
-        except:
+        except Exception:
             alliance.executor = None
         alliance.save()
 
@@ -76,13 +76,13 @@ def update_corporation(corpID, sync=False):
     # up character that chokes eveapi
     try:
         corpapi = api.corp.CorporationSheet(corporationID=corpID)
-    except:
+    except Exception:
         raise AttributeError("Invalid Corp ID or Corp has malformed data.")
 
     if corpapi.allianceID:
         try:
             alliance = Alliance.objects.get(id=corpapi.allianceID)
-        except:
+        except Exception:
             # If the alliance doesn't exist, we start a task to add it
             # and terminate this task since the alliance task will call
             # it after creating the alliance object
@@ -98,7 +98,7 @@ def update_corporation(corpID, sync=False):
     else:
         alliance = None
 
-    if Corporation.objects.filter(id=corpID).count():
+    if Corporation.objects.filter(id=corpID).exists():
         # Corp exists, update it
         corp = Corporation.objects.get(id=corpID)
         corp.member_count = corpapi.memberCount
@@ -151,13 +151,11 @@ def update_feeds():
     Caches and updates RSS feeds in NewsFeeds.
     """
     for feed in NewsFeed.objects.all():
+        data = feedparser.parse(feed.url)
+        cache.set('feed_%s' % feed.pk, data, 7200)
+        feed.name = data['feed']['title']
         try:
-            data = feedparser.parse(feed.url)
-            cache.set('feed_%s' % feed.pk, data, 7200)
-            feed.name = data['feed']['title']
             feed.description = data['feed']['subtitle']
-            feed.save()
-        except:
-            # There shouldn't be any exceptions, but we want to continue
-            # if there are.
-            pass
+        except KeyError:
+            feed.decription = "None Provided"
+        feed.save()

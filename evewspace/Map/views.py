@@ -66,7 +66,6 @@ def get_map(request, map_id):
     context = {
         'map': current_map,
         'access': current_map.get_permission(request.user),
-        'systemsJSON': current_map.as_json(request.user)
     }
     return TemplateResponse(request, 'map.html', context)
 
@@ -79,7 +78,7 @@ def map_checkin(request, map_id):
     current_map = get_object_or_404(Map, pk=map_id)
 
     # AJAX requests should post a JSON datetime called loadtime
-    # back that we use to get recent logs.
+#     # back that we use to get recent logs.
     if 'loadtime' not in request.POST:
         return HttpResponse(json.dumps({'error': "No loadtime"}),
                             mimetype="application/json")
@@ -93,17 +92,9 @@ def map_checkin(request, map_id):
         if dialog_html is not None:
             json_values.update({'dialogHTML': dialog_html})
 
-    new_log_query = MapLog.objects.filter(timestamp__gt=load_time,
+    log_list = MapLog.objects.filter(timestamp__gt=load_time,
                                           visible=True,
                                           map=current_map)
-    log_list = []
-
-    for log in new_log_query:
-        #TODO (marbin): Move this to a template.
-        log_list.append(
-            "<strong>User:</strong> %s <strong>Action:</strong> %s"
-            % (log.user.username, log.action)
-        )
 
     log_string = render_to_string('log_div.html', {'logs': log_list})
     json_values.update({'logs': log_string})
@@ -491,8 +482,10 @@ def bulk_sig_import(request, map_id, ms_id):
             if k < 75:
                 sig_id = utils.convert_signature_id(row[COL_SIG])
                 sig = Signature.objects.get_or_create(sigid=sig_id,
+                        modified_by=request.user,
                         system=map_system.system)[0]
                 sig = _update_sig_from_tsv(sig, row)
+                sig.modified_by = request.user
                 sig.save()
                 signals.signature_update.send_robust(sig, user=request.user,
                                                  map=map_system.map,
@@ -511,6 +504,16 @@ def bulk_sig_import(request, map_id, ms_id):
                                 {'mapsys': map_system})
 
 
+@login_required
+@require_map_permission(permission=2)
+def toggle_sig_owner(request, map_id, ms_id, sig_id=None):
+    if not request.is_ajax():
+        raise PermissionDenied
+    sig = get_object_or_404(Signature, pk=sig_id)
+    sig.toggle_ownership(request.user)
+    return HttpResponse()
+
+
 # noinspection PyUnusedLocal
 @login_required
 @require_map_permission(permission=2)
@@ -527,7 +530,8 @@ def edit_signature(request, map_id, ms_id, sig_id=None):
     if sig_id != None:
         signature = get_object_or_404(Signature, pk=sig_id)
         created = False
-
+        if not signature.owned_by:
+            signature.toggle_ownership(request.user)
     if request.method == 'POST':
         form = SignatureForm(request.POST)
         if form.is_valid():
@@ -544,6 +548,7 @@ def edit_signature(request, map_id, ms_id, sig_id=None):
             else:
                 sigtype = None
             signature.sigtype = sigtype
+            signature.modified_by = request.user
             signature.save()
             map_system.system.lastscanned = datetime.now(pytz.utc)
             map_system.system.save()
@@ -551,6 +556,8 @@ def edit_signature(request, map_id, ms_id, sig_id=None):
                 action = 'Created'
             else:
                 action = 'Updated'
+            if signature.owned_by:
+                signature.toggle_ownership(request.user)
             map_system.map.add_log(request.user,
                                    "%s signature %s in %s (%s)" %
                                    (action, signature.sigid, map_system.system.name,

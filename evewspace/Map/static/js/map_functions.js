@@ -380,6 +380,18 @@ function EditSignature(msID, sigID){
 }
 
 
+function OwnSignature(msID, sigID){
+    address = "system/" + msID + "/signatures/" + sigID + "/own/";
+    $.ajax({
+        url: address,
+        type: "POST",
+        success: function(data){
+            LoadSignatures(msID, false);
+        }
+    });
+}
+
+
 function GetEditSignatureBox(msID, sigID){
     address = "system/" + msID + "/signatures/" + sigID + "/edit/";
     $.ajax({
@@ -388,6 +400,7 @@ function GetEditSignatureBox(msID, sigID){
         success: function(data){
             $('#sys' + msID + "SigAddFOrm").empty();
             $('#sys' + msID + "SigAddForm").html(data);
+            LoadSignatures(msID, false);
         }
     });
 }
@@ -810,6 +823,10 @@ function DrawSystem(system) {
         sysText.msID = system.msID;
         sysText.sysID = system.sysID;
         sysText.click(onSysClick);
+         if (is_igb === true){
+            childSys.dblclick(onSysDblClick);
+            sysText.dblclick(onSysDblClick);
+        }
         ColorSystem(system, childSys, sysText);
         childSys.collapsed = system.collapsed;
         objSystems.push(childSys);
@@ -841,6 +858,10 @@ function DrawSystem(system) {
         sysText.msID = system.msID;
         sysText.sysID = system.sysID;
         sysText.click(onSysClick);
+        if (is_igb === true){
+            rootSys.dblclick(onSysDblClick);
+            sysText.dblclick(onSysDblClick);
+        }
         ColorSystem(system, rootSys, sysText);
 
         objSystems.push(rootSys);
@@ -1228,6 +1249,10 @@ function onSysClick(e) {
     DisplaySystemDetails(this.msID, this.sysID);
     var div = document.getElementById("sys"+this.msID+"Tip");
     div.style.display = 'none';
+}
+
+function onSysDblClick(e) {
+    CCPEVE.showInfo(5, this.sysID);
 }
 
 function OnWhOver(e) {
