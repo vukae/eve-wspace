@@ -46,7 +46,7 @@ Then, create the database and grant access to it to a new mysql user called *map
 
     mysql> CREATE DATABASE evewspace CHARACTER SET utf8;
 
-    mysql> GRANT ALL PRIVILEGES ON evewspace.* TO 'maptool'@'localhost' IDENTIFIED BY '<insert a password>;
+    mysql> GRANT ALL PRIVILEGES ON evewspace.* TO 'maptool'@'localhost' IDENTIFIED BY '<insert a password>';
 
     mysql> quit
 
@@ -222,18 +222,18 @@ You need to tell supervisor about the tools you want it to run, to do that, you 
     [program:celeryd]
     command=python manage.py celery worker -B --loglevel=info
     directory=/home/maptool/eve-wspace/evewspace
-    environment=PATH=/home/maptool/eve-wspace/bin
+    environment=PATH="/home/maptool/eve-wspace/bin"
     user=maptool
     autostart=true
     autorestart=true
     redirect_stderr=True
 
-    $ sudo nano /etc/supervisor/conf.d/gunicorn.conf`
+    $ sudo nano /etc/supervisor/conf.d/gunicorn.conf
 
     [program:gunicorn]
     command=/home/maptool/eve-wspace/bin/gunicorn_django --workers=4 -b 0.0.0.0:8000 settings.py
     directory=/home/maptool/eve-wspace/evewspace/evewspace
-    environment=PATH=/home/maptool/eve-wspace/bin
+    environment=PATH="/home/maptool/eve-wspace/bin"
     user=maptool
     autostart=true
     autorestart=true
@@ -282,7 +282,7 @@ Now that Eve W-Space itself is running, you need to get people to it. That's whe
     }
 
 
-    $ sudo rm /etc/nginx/sites-enabled/default`
+    $ sudo rm /etc/nginx/sites-enabled/default
     $ sudo ln -s /etc/nginx/sites-available/evewspace /etc/nginx/sites-enabled/evewspace
     $ sudo service nginx reload
 

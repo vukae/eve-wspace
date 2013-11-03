@@ -31,6 +31,16 @@ class TeamspeakServer(models.Model):
     # If enforceusers = True, any TS users without a Django user mapping will be removed
     enforeceusers = models.BooleanField()
 
+    @classmethod
+    def create(cls,host,queryuser,querypass,queryport,voiceport):
+        ts3= cls(host=host,queryuser=queryuser,querypass=querypass,queryport=queryport,voiceport=voiceport)
+        return ts3
+
+    class Meta:
+        permissions = (('ts_admin', 'Can administer Teamspeak settings'),
+                       ('ts_see_online', 'Can see online TS users'),
+                       )
+
 class GroupMap(models.Model):
     """Maps Django user groups to Teamspeak groups."""
     tsserver = models.ForeignKey(TeamspeakServer, related_name="groupmaps")
