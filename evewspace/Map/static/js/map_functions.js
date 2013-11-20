@@ -32,7 +32,7 @@ var highlightActivePilots = true; // Draw a notification ring around systems wit
 var goodColor = "#00FF00"; // Color of good status connections
 var badColor = "#FF0000"; // Color of first shrink connections
 var bubbledColor = "#FF0000"; // Color of first shrink connections
-var clearWhColor = "#00FF00"; // Color of good status connections
+var clearWhColor = "#BBFFBB"; // Color of good status connections
 var warningColor = "#FF00FF"; // Color of mass critical connections
 var renderCollapsedConnections = false; // Are collapsed connections shown?
 var autoRefresh = true; // Does map automatically refresh every 15s?
@@ -84,10 +84,7 @@ function doMapAjaxCheckin() {
         type: "POST",
         url: currentpath,
         data: {"loadtime": loadtime, "silent": silentSystem},
-        success: processAjax,
-        error: function(error){
-            alert('An error ocurred posting back to the server: \n\n' + error.responseText);
-        }
+        success: processAjax
         });
 }
 
@@ -316,12 +313,24 @@ function GetSiteSpawns(msID, sigID){
 function AddPOS(sysID){
     //This function adds a system using the information in a form named #sysAddForm
     address = "/pos/" + sysID + "/add/";
+    $('#pos_message').hide();
+    $('#btnAddPOS').html('Saving...');
+    $('#btnAddPOS').addClass('disabled');
     $.ajax({
         type: "POST",
         url: address,
         data: $('#addPOSForm').serialize(),
         success: function(data){
             GetPOSList(sysID);
+            $('#modalHolder').modal('hide');
+            $('#btnAddPOS').html('Add POS');
+            $('#btnAddPOS').removeClass('disabled');
+        },
+        error: function(error){
+           $('#pos_error').html(error.responseText);
+           $('#pos_message').show();
+           $('#btnAddPOS').html('Add POS');
+           $('#btnAddPOS').removeClass('disabled');
         }
     });
 }
@@ -329,12 +338,12 @@ function AddPOS(sysID){
 
 function DeletePOS(posID, sysID){
     address = "/pos/" + sysID + "/" + posID + "/remove/";
-    $.ajax({
+   $.ajax({
         type: "POST",
         url: address,
         success: function(){
             GetPOSList(sysID);
-        }
+       },
     });
 }
 
@@ -354,16 +363,27 @@ function GetEditPOSDialog(posID, sysID){
 
 
 function EditPOS(posID, sysID){
-    //This function adds a system using the information in a form named #sysAddForm
     address = "/pos/" + sysID + "/" + posID + "/edit/";
-    $.ajax({
+    $('#pos_message').hide();
+    $('#btnEditPOS').html('Saving...');
+    $('#btnEditPOS').addClass('disabled');
+   $.ajax({
         type: "POST",
         url: address,
         data: $('#editPOSForm').serialize(),
         success: function(data){
             GetPOSList(sysID);
-        }
-    });
+            $('#modalHolder').modal('hide');
+            $('#btnEditPOS').html('Save POS');
+            $('#btnEditPOS').removeClass('disabled');
+       },
+       error: function(error){
+           $('#pos_error').html(error.responseText);
+           $('#pos_message').show();
+           $('#btnEditPOS').html('Save POS');
+           $('#btnEditPOS').removeClass('disabled');
+      }
+   });
 }
 
 

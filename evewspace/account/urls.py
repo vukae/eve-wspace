@@ -14,7 +14,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from django.conf.urls.defaults import patterns, include, url
+from django.conf.urls import patterns, include, url
 
 import profile_section_registry
 import user_admin_section_registry
@@ -61,7 +61,7 @@ urlpatterns = patterns('',
          'email_template_name': 'password_reset_email.html',
          'subject_template_name': 'reset_subject.txt'}, name='password_reset'),
     url(r'^password/reset/done$', 'django.contrib.auth.views.password_reset_done',
-        {'template_name': 'password_reset_done.html',}),
+        {'template_name': 'password_reset_done.html'}, name='password_reset_done'),
     url(r'^password/reset/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)',
         'account.views.password_reset_confirm',
         name='password_reset_confirm'),
