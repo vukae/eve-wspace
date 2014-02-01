@@ -165,7 +165,7 @@ def add_pos(request, sysID):
                     fittings.append(cols)
                     if cols[1] == 'Moon' and cols[2].endswith('km'):
                         #found a moon close by
-                        distance = int(cols[2][:-3].replace(',',''))
+                        distance = int(cols[2][:-3].replace(',','').replace('.',''))
                         if distance < moon_distance:
                             #closest moon so far
                             moon_distance = distance
@@ -175,7 +175,7 @@ def add_pos(request, sysID):
                 return HttpResponse('No moon found in d-scan!', status=404)
 
             #parse POS location
-            regex = '^%s ([IVX]+) - Moon ([1-9]+)$' % (system.name)
+            regex = '^%s ([IVX]+) - Moon ([0-9]+)$' % (system.name)
             re_result = re.match(regex, moon_name)
             if not re_result:
                 return HttpResponse(
@@ -202,8 +202,8 @@ def add_pos(request, sysID):
                 corporation=corp)
             try:
                 pos.fit_from_iterable(fittings)
-            except BaseException:
-                return HttpResponse('No POS found in d-scan!', status=404)
+            except AttributeError as e:
+                return HttpResponse(e, status=404)
 
         else:
             tower = get_object_or_404(Type, name=request.POST['tower'])

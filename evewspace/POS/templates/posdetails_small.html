@@ -12,9 +12,10 @@
         <span class="planetno"><strong>{{pos.planet}}</strong></span>
 		<span class="moonlabel">Moon: </span>
         <span class="moonno"><strong>{{pos.moon}}<strong></span>&nbsp
-        <span class="postype"><strong>{{pos.towertype.name}}</strong></span>&nbsp &nbsp
+        <span class="posname"><strong>{{pos.posname}}</strong></span>&nbsp &nbsp
         <br />
         <div class="posSummary">
+            <span class="postype"><strong>{{pos.towertype.name}}</strong></span><br />
             {% if pos.status == 0 %}
                 <span class="label label-info">Status: UNANCHORED</span>
             {% endif %}

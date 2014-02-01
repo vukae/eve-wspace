@@ -130,27 +130,25 @@ def _checkin_igb_trusted(request, current_map):
     containing the html for a system add dialog if we detect that a new system
     needs to be added
     """
+    can_edit = current_map.get_permission(request.user) == 2
     current_location = (request.eve_systemid, request.eve_charname,
             request.eve_shipname, request.eve_shiptypename)
     char_cache_key = 'char_%s_location' % request.eve_charid
     old_location = cache.get(char_cache_key)
     result = None
-    print old_location
+    current_system = get_object_or_404(System, pk=current_location[0])
 
     if old_location != current_location:
         if old_location:
             old_system = get_object_or_404(System, pk=old_location[0])
             old_system.remove_active_pilot(request.eve_charid)
-        current_system = get_object_or_404(System, pk=current_location[0])
-        current_system.add_active_pilot(request.user.username,
-                request.eve_charid, request.eve_charname, request.eve_shipname,
-                request.eve_shiptypename)
         request.user.get_profile().update_location(current_system.pk,
                 request.eve_charid, request.eve_charname, request.eve_shipname,
                 request.eve_shiptypename)
         cache.set(char_cache_key, current_location, 60 * 5)
     #Conditions for the system to be automagically added to the map.
-        if (old_location and
+        if (can_edit and
+            old_location and
             old_system in current_map
             and current_system not in current_map
             and not _is_moving_from_kspace_to_kspace(old_system, current_system)
@@ -174,6 +172,11 @@ def _checkin_igb_trusted(request, current_map):
                 result = 'silent'
     else:
         cache.set(char_cache_key, current_location, 60 * 5)
+        # Use add_active_pilot to refresh the user's record in the global
+        # location cache
+        current_system.add_active_pilot(request.user.username,
+                request.eve_charid, request.eve_charname, request.eve_shipname,
+                request.eve_shiptypename)
 
     return result
 
@@ -188,9 +191,12 @@ def _is_moving_from_kspace_to_kspace(old_system, current_system):
     return old_system.is_kspace() and current_system.is_kspace()
 
 
-def get_system_context(ms_id):
+def get_system_context(ms_id, user):
     map_system = get_object_or_404(MapSystem, pk=ms_id)
-
+    if map_system.map.get_permission(user) == 2:
+        can_edit = True
+    else:
+        can_edit = False
     #If map_system represents a k-space system get the relevant KSystem object
     if map_system.system.is_kspace():
         system = map_system.system.ksystem
@@ -217,7 +223,8 @@ def get_system_context(ms_id):
         locations = {}
     return {'system': system, 'mapsys': map_system,
             'scanwarning': scan_warning, 'isinterest': interest,
-            'stfleets': st_fleets, 'locations': locations}
+            'stfleets': st_fleets, 'locations': locations,
+            'can_edit': can_edit}
 
 
 @login_required
@@ -297,7 +304,8 @@ def system_details(request, map_id, ms_id):
     if not request.is_ajax():
         raise PermissionDenied
 
-    return render(request, 'system_details.html', get_system_context(ms_id))
+    return render(request, 'system_details.html',
+            get_system_context(ms_id, request.user))
 
 
 # noinspection PyUnusedLocal
@@ -310,7 +318,8 @@ def system_menu(request, map_id, ms_id):
     if not request.is_ajax():
         raise PermissionDenied
 
-    return render(request, 'system_menu.html', get_system_context(ms_id))
+    return render(request, 'system_menu.html',
+            get_system_context(ms_id, request.user))
 
 
 # noinspection PyUnusedLocal
@@ -561,7 +570,7 @@ def toggle_sig_owner(request, map_id, ms_id, sig_id=None):
 
 # noinspection PyUnusedLocal
 @login_required
-@require_map_permission(permission=2)
+@require_map_permission(permission=1)
 def edit_signature(request, map_id, ms_id, sig_id=None):
     """
     GET gets a pre-filled edit signature form.
@@ -571,6 +580,9 @@ def edit_signature(request, map_id, ms_id, sig_id=None):
     if not request.is_ajax():
         raise PermissionDenied
     map_system = get_object_or_404(MapSystem, pk=ms_id)
+    # If the user can't edit signatures, return a blank response
+    if map_system.map.get_permission(request.user) != 2:
+        return HttpResponse()
     action = None
     if sig_id != None:
         signature = get_object_or_404(Signature, pk=sig_id)
@@ -1044,9 +1056,34 @@ def map_settings(request, map_id):
     """
     Returns and processes the settings section for a map.
     """
+    saved = False
     subject = get_object_or_404(Map, pk=map_id)
+    if request.method == 'POST':
+        name = request.POST.get('name', None)
+        explicit_perms = request.POST.get('explicitperms', False)
+        if not name:
+            return HttpResponse('The map name cannot be blank', status=400)
+        subject.name = name
+        subject.explicitperms = explicit_perms
+        for group in Group.objects.all():
+            MapPermission.objects.filter(group=group, map=subject).delete()
+            setting = request.POST.get('map-%s-group-%s-permission' % (
+                subject.pk, group.pk), 0)
+            if setting != 0:
+                MapPermission(group=group, map=subject, access=setting).save()
+        subject.save()
+        saved = True
+    groups = []
+    for group in Group.objects.all():
+        if MapPermission.objects.filter(map=subject, group=group).exists():
+            perm = MapPermission.objects.get(map=subject, group=group).access
+        else:
+            perm = 0
+        groups.append((group,perm))
+
     return TemplateResponse(request, 'map_settings_single.html',
-                            {'map': subject})
+            {'map': subject, 'groups': groups, 'saved': saved})
+
 
 
 @permission_required('Map.map_admin')
