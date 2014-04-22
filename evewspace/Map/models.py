@@ -77,6 +77,12 @@ class System(SystemData):
     sysclass_choices = ((1, "C1"), (2, "C2"), (3, "C3"), (4, "C4"), (5, "C5"),
             (6, "C6"), (7, "High Sec"), (8, "Low Sec"), (9, "Null Sec"))
     sysclass = models.IntegerField(choices = sysclass_choices)
+    importance_choices = ((0, "Regular"),
+                     (1, "Dangerous System"),
+                     (2, "Important System"))
+    importance = models.IntegerField(choices = importance_choices, default = 0)
+    occupied = models.TextField(blank = True)
+
     occupied = models.TextField(blank = True)
     info = models.TextField(blank = True)
     lastscanned = models.DateTimeField()
@@ -104,9 +110,6 @@ class System(SystemData):
             return self.ksystem
 
     def save(self, *args, **kwargs):
-        # Make sure any new lines in info or occupied are replaced with <br />
-        self.info = self.info.replace("\n", "<br />")
-        self.occupied = self.occupied.replace("\n", "<br />")
         self.updated = datetime.now(pytz.utc)
         if self.lastscanned < datetime.now(pytz.utc) - timedelta(days=3):
             self.lastscanned = datetime.now(pytz.utc)
